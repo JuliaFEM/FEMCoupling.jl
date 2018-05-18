@@ -1,4 +1,9 @@
-*.jl.cov
-*.jl.*.cov
-*.jl.mem
+docs/build/
+docs/site/
 deps/deps.jl
+.ipynb_checkpoints
+*.cov
+*.mem
+*.swp
+*.pyc
+*.lyx~
