@@ -7,6 +7,8 @@ module FEMCoupling
 using Reexport
 @reexport using FEMBase
 
+include("get_C.jl")
+
 type KinematicCoupling <: BoundaryProblem
 end
 
