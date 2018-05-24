@@ -77,7 +77,7 @@ KK=[K C';
     C D]
 ff=[f;
     g]
-u = KK\ff
+u = lufact(KK) \ full(ff)
 
 @test isapprox(C,C_expected,rtol=0.0001)
 @test isapprox(D,D_expected,rtol=0.0001)

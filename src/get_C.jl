@@ -1,9 +1,9 @@
 function get_C(refnode,slaves,dofs,ndofs,K_size)
 
     C_rows=size(slaves,1)*size(dofs,1)
-    CC=zeros(C_rows,K_size)
-    g=zeros(C_rows,1)
-    D=zeros(C_rows,C_rows)
+    CC=spzeros(C_rows,K_size)
+    g=spzeros(C_rows,1)
+    D=spzeros(C_rows,C_rows)
 
     for i in 1:length(dofs),
         j in 0:length(slaves)-1
