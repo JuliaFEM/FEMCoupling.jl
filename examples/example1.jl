@@ -84,7 +84,43 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         if haskey(ref_node, "point moment 3")
             M = ref_node("point moment 3")
             info("calculate point moment")
-            # fe += ...
+            w2=0.5
+            w3=0.5
+
+            X1=[0.0, 0.0, 0.0]
+            X2=[3.0, 0.0, 0.0]
+            X3=[3.0, 3.0, 0.0]
+            X4=[0.0, 3.0, 0.0]
+
+            XR=[6.0, 1.5, 0.0]
+
+            xbar=w2*X2+w3*X3
+
+
+            FR=[10.0e5, 35.0e5, 0.0] # Point forces in reference node
+            MR=[0.0, 0.0, 80.0e5]    # Point moments in reference node
+
+            r2 = X2-xbar
+            r3 = X3-xbar
+            rR = XR-xbar
+
+            T=  w2*(dot(r2,r2)*eye(3)-(r2*r2'))+w3*(dot(r3,r3)*eye(3)-(r3*r3'))
+            T[2,2]=1
+
+            MRhat = MR + cross(rR,FR)
+
+            F2=w2*(FR+cross((T^(-1)*MRhat),r2))
+            F3=w3*(FR+cross((T^(-1)*MRhat),r3))
+
+            if coupling_node_id == 2
+                fe[1]=F2[1] # 6.67e+6
+                fe[2]=F2[2] # 1.75e+6
+            end
+            if coupling_node_id == 3
+                fe[1]=F3[1] # 6.67e+6
+                fe[2]=F3[2] # 1.75e+6
+            end
+            
         end
         if haskey(ref_node, "point load 1")
             M = ref_node("point load 1")
