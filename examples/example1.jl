@@ -65,15 +65,56 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
                                     assembly::Assembly,
                                     elements::Vector{Element{Poi1}}, time)
 
+    function to3d(x)
+        if length(x)==2
+            return [x;0.0]
+        end
+        return x
+    end
     ref_node = problem.properties.reference_node
     if length(get_connectivity(ref_node)) == 0
         error("Reference node node defined. Define reference node using add_reference_node!")
     end
     ref_node_id = first(get_connectivity(ref_node))
     info("Reference node id = $ref_node_id")
-    X_r = first(ref_node("geometry", time))
+    X_r = to3d(first(ref_node("geometry", time)))
     info("Reference node geometry = $X_r")
     fe = zeros(2)
+    weights=Dict{Int64,Float64}()
+    X_n=Dict{Int64,Vector{Float64}}()
+    for coupling_node in elements
+        coupling_node_id = first(get_connectivity(coupling_node))
+        X_n[coupling_node_id] = to3d(first(coupling_node("geometry", time)))
+        weights[coupling_node_id] = 1.0
+    end
+    total = 0.0
+    for n in keys(weights)
+        total=total+weights[n]
+    end
+    for n in keys(weights)
+        weights[n]=weights[n]/total
+    end
+    xbar = zeros(3)
+    for n in keys(weights)
+        xbar=xbar+weights[n]*X_n[n]
+    end
+    r=Dict{Int64,Vector{Float64}}()
+    for n in keys(weights)
+        r[n]=X_n[n]-xbar
+    end
+            rR = X_r-xbar
+    T=zeros(3,3)
+    for n in keys(weights)
+        T=T+weights[n]*(dot(r[n],r[n])*eye(3)-(r[n]*r[n]'))
+    end
+    display(T)
+    T[2,2]=1
+    invT=inv(T)
+
+            # fe += ...
+
+
+
     for coupling_node in elements
         fill!(fe, 0.0)
         coupling_node_id = first(get_connectivity(coupling_node))
@@ -81,57 +122,30 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         info("Coupling node id = $coupling_node_id, geometry = $X_n")
         gdofs = get_gdofs(problem, coupling_node)
         info("gdofs = $gdofs")
-        if haskey(ref_node, "point moment 3")
-            M = ref_node("point moment 3")
+        FR=zeros(3)
+        MR=zeros(3)
+        for i = 1:3
+            if haskey(ref_node, "point moment $i")
+                MR[i]=ref_node("point moment $i", time)
+            end
+            if haskey(ref_node, "point force $i")
+                MR[i]=ref_node("point force $i", time)
+            end
+        end
+
+    info("FR=$FR,MR=$MR")
+
             info("calculate point moment")
-            w2=0.5
-            w3=0.5
 
-            X1=[0.0, 0.0, 0.0]
-            X2=[3.0, 0.0, 0.0]
-            X3=[3.0, 3.0, 0.0]
-            X4=[0.0, 3.0, 0.0]
-
-            XR=[6.0, 1.5, 0.0]
-
-            xbar=w2*X2+w3*X3
-
-
-            FR=[10.0e5, 35.0e5, 0.0] # Point forces in reference node
-            MR=[0.0, 0.0, 80.0e5]    # Point moments in reference node
-
-            r2 = X2-xbar
-            r3 = X3-xbar
-            rR = XR-xbar
-
-            T=  w2*(dot(r2,r2)*eye(3)-(r2*r2'))+w3*(dot(r3,r3)*eye(3)-(r3*r3'))
-            T[2,2]=1
-
+display(rR)
+display(FR)
+if length(rR)==2
+    rR=[rR;0.0]
+end
             MRhat = MR + cross(rR,FR)
-
-            F2=w2*(FR+cross((T^(-1)*MRhat),r2))
-            F3=w3*(FR+cross((T^(-1)*MRhat),r3))
-
-            if coupling_node_id == 2
-                fe[1]=F2[1] # 6.67e+6
-                fe[2]=F2[2] # 1.75e+6
-            end
-            if coupling_node_id == 3
-                fe[1]=F3[1] # 6.67e+6
-                fe[2]=F3[2] # 1.75e+6
-            end
-            
-        end
-        if haskey(ref_node, "point load 1")
-            M = ref_node("point load 1")
-            info("calculate point moment")
-            # fe += ...
-        end
-        if haskey(ref_node, "point load 2")
-            M = ref_node("point load 2")
-            info("calculate point moment")
-            # fe += ...
-        end
+            n = coupling_node_id
+            Fn = weights[n]*(FR+cross(invT*MRhat,r[n]))
+            fe = fe+Fn[1:2]
         add!(assembly.f, gdofs, fe)
     end
 end
@@ -143,7 +157,10 @@ element4 = Element(Poi1, [3])
 update!([element3, element4], "geometry", X)
 element5 = Element(Poi1, [5])
 update!(element5, "geometry", X)
-update!(element5, "point moment 3", 10.0/d)
+update!(element5, "point force 1", 10.0e5)
+update!(element5, "point force 2", 35.0e5)
+update!(element5, "point moment 3", 80.0e5)
+
 add_coupling_nodes!(coupling, [element3, element4])
 add_reference_node!(coupling, element5)
 
@@ -156,3 +173,8 @@ run!(step)
 time = 0.0
 u = element1("displacement", time)
 println("displacement: $u")
+u1,u2,u3,u4=u
+using Base.Test
+u_expected=[1.5539838e-3, 1.9639399e-3, -1.4622657e-3, 1.9418863e-3]
+@test isapprox(u2,u_expected[1:2])
+@test isapprox(u3,u_expected[3:4])
