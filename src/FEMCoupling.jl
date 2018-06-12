@@ -14,4 +14,10 @@ end
 
 export KinematicCoupling
 
+type DistributedCoupling <: BoundaryProblem
+end
+
+export DistributedCoupling
+
+
 end
