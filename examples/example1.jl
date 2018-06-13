@@ -20,14 +20,14 @@ X = Dict(1 => [0.0, 0.0],
          2 => [d, 0.0],
          3 => [d, d],
          4 => [0.0, d],
-         5 => [2*d, 1/2*d])
+         5 => [2*d, d/2])
 element1 = Element(Quad4, [1, 2, 3, 4])
 update!(element1, "geometry", X)
-update!(element1, "youngs modulus", 288.0)
+update!(element1, "youngs modulus", 210.0e8)
 update!(element1, "poissons ratio", 1/3)
 
 problem = Problem(Elasticity, "test problem", 2)
-problem.properties.formulation = :plane_strain
+problem.properties.formulation = :plane_stress
 add_elements!(problem, [element1])
 
 bc = Problem(Dirichlet, "fixed", 2, "displacement")
@@ -172,14 +172,15 @@ run!(step)
 #close(xdmf.hdf)
 time = 0.0
 
-u = element1("displacement", time)
-println("displacement: $u")
-u1,u2,u3,u4=u
+
 using Base.Test
-u_expected=[1.5539838e-3, 1.9639399e-3, -1.4622657e-3, 1.9418863e-3]
-@test isapprox(u2,u_expected[1:2])
-@test isapprox(u3,u_expected[3:4])
 
 f = [full(coupling.assembly.f);0;0]
 f_expected=[0.0; 0.0; 6.66667e6; 1.75e6; -5.66667e6; 1.75e6; 0.0; 0.0]
 @test isapprox(f,f_expected,rtol=0.001)
+
+u = element1("displacement", time)
+u1,u2,u3,u4=u
+u_expected=[-4.90255e-19, 3.6124e-19, 0.00155379, 0.00196296, -0.00146208, 0.0019418, 0.0, 0.0]
+@test isapprox(u2,u_expected[3:4],rtol=0.001)
+@test isapprox(u3,u_expected[5:6],rtol=0.001)
