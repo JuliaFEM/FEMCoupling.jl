@@ -20,7 +20,7 @@ X = Dict(1 => [0.0, 0.0],
          2 => [d, 0.0],
          3 => [d, d],
          4 => [0.0, d],
-         5 => [3*d, 1/2*d])
+         5 => [2*d, 1/2*d])
 element1 = Element(Quad4, [1, 2, 3, 4])
 update!(element1, "geometry", X)
 update!(element1, "youngs modulus", 288.0)
@@ -129,19 +129,19 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
                 MR[i]=ref_node("point moment $i", time)
             end
             if haskey(ref_node, "point force $i")
-                MR[i]=ref_node("point force $i", time)
+                FR[i]=ref_node("point force $i", time)
             end
         end
 
-    info("FR=$FR,MR=$MR")
+        info("FR=$FR,MR=$MR")
 
-            info("calculate point moment")
+        info("calculate point moment")
 
-display(rR)
-display(FR)
-if length(rR)==2
-    rR=[rR;0.0]
-end
+        display(rR)
+        display(FR)
+        if length(rR)==2
+            rR=[rR;0.0]
+        end
             MRhat = MR + cross(rR,FR)
             n = coupling_node_id
             Fn = weights[n]*(FR+cross(invT*MRhat,r[n]))
@@ -171,6 +171,7 @@ add_problems!(step, [problem, bc, coupling])
 run!(step)
 #close(xdmf.hdf)
 time = 0.0
+
 u = element1("displacement", time)
 println("displacement: $u")
 u1,u2,u3,u4=u
@@ -178,3 +179,7 @@ using Base.Test
 u_expected=[1.5539838e-3, 1.9639399e-3, -1.4622657e-3, 1.9418863e-3]
 @test isapprox(u2,u_expected[1:2])
 @test isapprox(u3,u_expected[3:4])
+
+f = [full(coupling.assembly.f);0;0]
+f_expected=[0.0; 0.0; 6.66667e6; 1.75e6; -5.66667e6; 1.75e6; 0.0; 0.0]
+@test isapprox(f,f_expected,rtol=0.001)
