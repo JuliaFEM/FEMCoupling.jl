@@ -6,6 +6,7 @@ revise()
 using JuliaFEM
 using FEMBase
 using Base.Test
+using FEMCoupling
 using FEMCoupling: add_coupling_nodes!,add_reference_node!
 
 # Creating 2d geometry for square shaped element and one independent node.
@@ -36,6 +37,7 @@ update!(element2, "displacement 1", 0.0)
 update!(element2, "displacement 2", 0.0)
 add_elements!(bc, [element2])
 
+###############################################################################
 # Creating coupling problem.
 coupling = Problem(Coupling, "test", 2, "displacement")
 
