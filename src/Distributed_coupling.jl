@@ -1,3 +1,6 @@
+# This file is a part of JuliaFEM.
+# License is MIT: see https://github.com/JuliaFEM/FEMCoupling.jl/blob/master/LICENSE
+
 type Coupling <: BoundaryProblem
     reference_node :: Element{Poi1}
 end
