@@ -1,48 +1,14 @@
-# This file is a part of JuliaFEM.
-# License is MIT: see https://github.com/JuliaFEM/FEMCoupling.jl/blob/master/LICENSE
-
-using JuliaFEM
-using FEMBase
-using Logging
-Logging.configure(level=DEBUG)
-
 type Coupling <: BoundaryProblem
     reference_node :: Element{Poi1}
 end
+
+export Coupling
 
 function Coupling()
     reference_node = Element(Poi1, Int64[])
     return Coupling(reference_node)
 end
 
-d = 3.0
-X = Dict(1 => [0.0, 0.0],
-         2 => [d, 0.0],
-         3 => [d, d],
-         4 => [0.0, d],
-         5 => [2*d, d/2])
-element1 = Element(Quad4, [1, 2, 3, 4])
-update!(element1, "geometry", X)
-update!(element1, "youngs modulus", 210.0e8)
-update!(element1, "poissons ratio", 1/3)
-
-problem = Problem(Elasticity, "test problem", 2)
-problem.properties.formulation = :plane_stress
-add_elements!(problem, [element1])
-
-bc = Problem(Dirichlet, "fixed", 2, "displacement")
-element2 = Element(Seg2, [4, 1])
-update!(element2, "geometry", X)
-update!(element2, "displacement 1", 0.0)
-update!(element2, "displacement 2", 0.0)
-add_elements!(bc, [element2])
-
-"""
-    add_coupling_nodes!(problem, elements)
-
-Add new coupling nodes into the problem. Nodes must be defined with Poi1
-elements.
-"""
 function add_coupling_nodes!(problem, elements)
     for element in elements
         push!(problem.elements, element)
@@ -50,12 +16,6 @@ function add_coupling_nodes!(problem, elements)
     return nothing
 end
 
-"""
-    add_reference_node!(problem, element)
-
-Add new reference node into the problem. Node must be defined with a Poi1
-element. If reference node is already defined, it will be replaced with new one.
-"""
 function add_reference_node!(problem, element)
     problem.properties.reference_node = element
     return nothing
@@ -149,38 +109,3 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         add!(assembly.f, gdofs, fe)
     end
 end
-
-coupling = Problem(Coupling, "test", 2, "displacement")
-# "slave nodes"
-element3 = Element(Poi1, [2])
-element4 = Element(Poi1, [3])
-update!([element3, element4], "geometry", X)
-element5 = Element(Poi1, [5])
-update!(element5, "geometry", X)
-update!(element5, "point force 1", 10.0e5)
-update!(element5, "point force 2", 35.0e5)
-update!(element5, "point moment 3", 80.0e5)
-
-add_coupling_nodes!(coupling, [element3, element4])
-add_reference_node!(coupling, element5)
-
-step = Analysis(Nonlinear)
-#xdmf = Xdmf("example1_results"; overwrite=true)
-#add_results_writer!(step, xdmf)
-add_problems!(step, [problem, bc, coupling])
-run!(step)
-#close(xdmf.hdf)
-time = 0.0
-
-
-using Base.Test
-
-f = [full(coupling.assembly.f);0;0]
-f_expected = [0.0; 0.0; 6.66667e6; 1.75e6; -5.66667e6; 1.75e6; 0.0; 0.0]
-@test isapprox(f,f_expected,rtol=0.001)
-
-u = element1("displacement", time)
-u1,u2,u3,u4 = u
-u_expected = [-4.90255e-19, 3.6124e-19, 0.00155379, 0.00196296, -0.00146208, 0.0019418, 0.0, 0.0]
-@test isapprox(u2, u_expected[3:4], rtol = 0.001)
-@test isapprox(u3, u_expected[5:6], rtol = 0.001)

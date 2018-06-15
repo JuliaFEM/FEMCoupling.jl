@@ -8,16 +8,7 @@ using Reexport
 @reexport using FEMBase
 
 include("get_C.jl")
-
-type KinematicCoupling <: BoundaryProblem
-end
-
-export KinematicCoupling
-
-type DistributedCoupling <: BoundaryProblem
-end
-
-export DistributedCoupling
+include("Distributed_coupling.jl")
 
 
 end

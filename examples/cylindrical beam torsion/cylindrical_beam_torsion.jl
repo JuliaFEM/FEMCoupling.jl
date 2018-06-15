@@ -13,8 +13,9 @@ println(a)
 
 using JuliaFEM
 using JuliaFEM.Preprocess
-using JuliaFEM.AbaqusReader.create_surface_elements
-using JuliaFEM.AbaqusReader.abaqus_read_mesh
+using JuliaFEM.Postprocess
+using JuliaFEM.Abaqus: create_surface_elements
+using FEMBase
 
 # read mesh
 mesh = abaqus_read_mesh("varsinolla.inp")

@@ -1,0 +1,16 @@
+#!/usr/bin/sh
+#$ -N "cylindrical_beam_torsion.jl"
+#$ -cwd
+#$ -q m384i
+#$ -pe smp 20
+#$ -o palikka.log
+#$ -j y
+
+# read this: https://fis8037.accdom.for.int/wiki/bin/view/Cluster/Julia
+
+job_name=cylindrical_beam_torsion.jl # <-- write the job file name to THIS LINE
+
+export JULIA_NUM_THREADS=24
+julia -e 'println("Julia version: ", VERSION)'
+julia $job_name
+julia -e 'println("Finished running job using Julia version ", VERSION)'
