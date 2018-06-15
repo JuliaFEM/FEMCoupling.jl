@@ -42,7 +42,7 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
     info("Reference node id = $ref_node_id")
     X_r = to3d(first(ref_node("geometry", time)))
     info("Reference node geometry = $X_r")
-    fe = zeros(2)
+    fe = zeros(3)
     weights = Dict{Int64,Float64}()
     X_n = Dict{Int64,Vector{Float64}}()
     for coupling_node in elements
@@ -71,7 +71,7 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         T = T+weights[n]*(dot(r[n],r[n])*eye(3)-(r[n]*r[n]'))
     end
     display(T)
-    T[2,2]=1
+    # T[2,2]=1
     invT = inv(T)
 
             # fe += ...
@@ -108,7 +108,7 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
             MRhat = MR + cross(rR,FR)
             n = coupling_node_id
             Fn = weights[n]*(FR+cross(invT*MRhat,r[n]))
-            fe = fe+Fn[1:2]
+            fe = fe+Fn[1:3]
         add!(assembly.f, gdofs, fe)
     end
 end

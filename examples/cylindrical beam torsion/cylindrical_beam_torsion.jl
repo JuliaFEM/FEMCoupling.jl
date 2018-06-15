@@ -1,15 +1,17 @@
 # Analytical calculation
-# T=1.500
-# L=210e-3
-# r=16e-3
-# d=2r
-# G=210e9/(2*(1+0.3))
-#
-# Wv=pi*d^3/16
-# tmax=T/Wv
-# a=2*L*tmax/(G*d)
-#
-# println(a)
+T=1.500
+L=210e-3
+r=16e-3
+d=2r
+G=210e9/(2*(1+0.3))
+
+Wv=pi*d^3/16
+tmax=T/Wv
+a=2*L*tmax/(G*d)
+
+println(a)
+using Revise
+revise()
 
 using Logging
 Logging.configure(level=DEBUG)
@@ -21,9 +23,10 @@ using JuliaFEM.Abaqus: create_surface_elements
 using FEMBase
 using FEMCoupling
 using FEMCoupling: add_reference_node!, add_coupling_nodes!
+using FEMBase.Test
 
 # read mesh
-mesh = abaqus_read_mesh("cylindrical_beam_torsion1.inp") #in this .inp file the coupling element is removed
+mesh = abaqus_read_mesh("cylindrical_beam_torsional.inp") #in this .inp file the coupling element is removed
 
 cylinder_element = create_elements(mesh,"Body1")
 # update!(cylinder_element, "geometry", mesh.nodes)
@@ -39,7 +42,7 @@ add_elements!(cylinder_problem, cylinder_element)
 bc_elements = [Element(Poi1, [j]) for j in mesh.node_sets[:Fixed_face_set]]
 update!(bc_elements, "geometry", mesh.nodes)
 for i=1:3
-    update!(bc_elements, "fixed displacement $i", 0.0)
+    update!(bc_elements, "displacement $i", 0.0)
 end
 
 bc = Problem(Dirichlet, "fixed", 3, "displacement")
@@ -69,3 +72,13 @@ add_reference_node!(coupling, reference_node)
 step = Analysis(Nonlinear)
 add_problems!(step, [cylinder_problem, bc, coupling])
 run!(step)
+
+################################################################################
+
+@testset "rotation" begin
+
+a_expected=6.306e-4/16 # from ABAQUS
+a=maximum(cylinder_problem.assembly.u)/16
+
+@test isapprox(a,a_expected,rtol=1e-3)
+end
