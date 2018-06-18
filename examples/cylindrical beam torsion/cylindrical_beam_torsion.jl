@@ -23,10 +23,12 @@ using JuliaFEM.Abaqus: create_surface_elements
 using FEMBase
 using FEMCoupling
 using FEMCoupling: add_reference_node!, add_coupling_nodes!
-using FEMBase.Test
+
 
 # read mesh
-mesh = abaqus_read_mesh("cylindrical_beam_torsional.inp") #in this .inp file the coupling element is removed
+datadir = Pkg.dir("FEMCoupling", "examples", "cylindrical beam torsion")
+mesh = abaqus_read_mesh(joinpath(datadir, "cylindrical_beam_torsional.inp"))
+println("Number of nodes in a model: ", length(mesh.nodes))
 
 cylinder_element = create_elements(mesh,"Body1")
 # update!(cylinder_element, "geometry", mesh.nodes)
@@ -75,6 +77,7 @@ run!(step)
 
 ################################################################################
 
+using FEMBase.Test
 @testset "rotation" begin
 
 a_expected=6.306e-4/16 # from ABAQUS
