@@ -39,9 +39,9 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         error("Reference node node defined. Define reference node using add_reference_node!")
     end
     ref_node_id = first(get_connectivity(ref_node))
-    info("Reference node id = $ref_node_id")
+    # info("Reference node id = $ref_node_id")
     X_r = to3d(first(ref_node("geometry", time)))
-    info("Reference node geometry = $X_r")
+    # info("Reference node geometry = $X_r")
     fe = zeros(3)
     weights = Dict{Int64,Float64}()
     X_n = Dict{Int64,Vector{Float64}}()
@@ -74,17 +74,13 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
     # T[2,2]=1
     invT = inv(T)
 
-            # fe += ...
-
-
-
     for coupling_node in elements
         fill!(fe, 0.0)
         coupling_node_id = first(get_connectivity(coupling_node))
         X_n = first(coupling_node("geometry", time))
-        info("Coupling node id = $coupling_node_id, geometry = $X_n")
+        # info("Coupling node id = $coupling_node_id, geometry = $X_n")
         gdofs = get_gdofs(problem, coupling_node)
-        info("gdofs = $gdofs")
+        # info("gdofs = $gdofs")
         FR = zeros(3)
         MR = zeros(3)
         for i = 1:3
@@ -96,9 +92,9 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
             end
         end
 
-        info("FR = $FR,MR = $MR")
+        # info("FR = $FR,MR = $MR")
 
-        info("calculate point moment")
+        # info("calculate point moment")
 
         display(rR)
         display(FR)
