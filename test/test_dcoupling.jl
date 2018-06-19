@@ -24,9 +24,9 @@ update!(element1, "youngs modulus", 210.0e8)
 update!(element1, "poissons ratio", 1/3)
 
 # Creating Elasticity problem named "test problem" with 2 dimensions.
-problem = Problem(Elasticity, "test problem", 2)
-problem.properties.formulation = :plane_stress
-add_elements!(problem, [element1])
+problem1 = Problem(Elasticity, "test problem", 2)
+problem1.properties.formulation = :plane_stress
+add_elements!(problem1, [element1])
 
 # Creating Dirichlet problem for boundary conditions with Seg2
 # element which fixes nodes 4 and 1.
@@ -39,7 +39,7 @@ add_elements!(bc, [element2])
 
 ###############################################################################
 # Creating coupling problem.
-coupling = Problem(Coupling, "test", 2, "displacement")
+coupling1 = Problem(Coupling, "test", 2, "displacement")
 
 # Creating Poi1 elements for coupling nodes and numbering
 # them with original node numbers.
@@ -57,13 +57,13 @@ update!(reference_node, "point moment 3", 80.0e5)
 
 # Pointing out that coupling nodes and reference nodes
 # are for the coupling problem.
-add_coupling_nodes!(coupling, [coupling_node2,coupling_node3])
-add_reference_node!(coupling, reference_node)
+add_coupling_nodes!(coupling1, [coupling_node2,coupling_node3])
+add_reference_node!(coupling1, reference_node)
 
 # Making step for nonlinear analysis and adding all three problems
 # to the step. Running the analysis.
 step = Analysis(Nonlinear)
-add_problems!(step, [problem, bc, coupling])
+add_problems!(step, [problem1, bc, coupling1])
 run!(step)
 
 
@@ -71,7 +71,7 @@ run!(step)
 # Global force vector and plane stress element's displacements
 # are compared.
 @testset "force vector and displacements" begin
-f = [full(coupling.assembly.f);0;0]
+f = [full(coupling1.assembly.f);0;0]
 f_expected = [0.0; 0.0; 6.66667e6; 1.75e6; -5.66667e6; 1.75e6; 0.0; 0.0]
 @test isapprox(f,f_expected,rtol=0.001)
 
