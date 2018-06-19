@@ -7,9 +7,8 @@ module FEMCoupling
 using Reexport
 @reexport using FEMBase
 
-mutable struct KinematicCoupling <: BoundaryProblem
-end
-
-export KinematicCoupling
+include("get_C.jl")
+include("distributed_coupling.jl")
+export Coupling
 
 end
