@@ -30,8 +30,8 @@ mesh = abaqus_read_mesh(joinpath(datadir, "example_dcoupling_cylindrical_beam.in
 println("Number of nodes in a model: ", length(mesh.nodes))
 
 # # Elements
-# Creating elements for the whole body. In the ABAQUS input file the cylinder
-# body is named "Body1".
+# Creating elements for the body. Mesh and element types are defined in
+# the ABAQUS input file. The cylinder body is named "Body1" in the input file.
 
 cylinder_body = create_elements(mesh,"Body1")
 
@@ -96,7 +96,7 @@ add_reference_node!(coupling, reference_node)
 # Creating a step and running the analysis. The cylinder_problem contains
 # information about the body, its elements and their values. The bc contains
 # information about boundary conditions and coupling contains information
-# about distributed coupling. 
+# about distributed coupling.
 
 step = Analysis(Nonlinear)
 add_problems!(step, [cylinder_problem, bc, coupling])
