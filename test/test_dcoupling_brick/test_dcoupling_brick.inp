@@ -1,7 +1,7 @@
 *HEADING
 Abaqus Job Created By SimLab 2017.2 .
 *******************************************************************************
-****		Created at 10:57:5, June 20,2018
+****		Created at 10:35:5, June 27,2018
 ****		NODES= 65
 ****		ELEMENTS= 27
 *******************************************************************************
@@ -73,25 +73,6 @@ Abaqus Job Created By SimLab 2017.2 .
 64,             120.00000,      120.00000,        0.00000
 65,              60.00000,       60.00000,      120.00000
 **
-*ELEMENT,TYPE=DCOUP3D,ELSET=RBE_65
-65, 65
-*DISTRIBUTING COUPLING,ELSET=RBE_65
-         1, 1.000000
-         2, 1.000000
-         3, 1.000000
-         4, 1.000000
-         5, 1.000000
-         6, 1.000000
-         7, 1.000000
-         8, 1.000000
-         9, 1.000000
-        10, 1.000000
-        11, 1.000000
-        12, 1.000000
-        13, 1.000000
-        14, 1.000000
-        15, 1.000000
-        16, 1.000000
 **HWCOLOR COMP         56     0
 **
 **ELSET COUNT = 27
@@ -153,13 +134,18 @@ Abaqus Job Created By SimLab 2017.2 .
         60
 **
 **NSET COUNT = 16
-*NSET, NSET=Coupling_nodes_set
+*NSET, NSET=coupling_nodes
          1,         2,         3,         4,         5,         6,         7,         8,
          9,        10,        11,        12,        13,        14,        15,        16,
 **NSET COUNT = 16
-*NSET, NSET=Fixed_face_set
+*NSET, NSET=fixed_face
         49,        50,        51,        52,        53,        54,        55,        56,
         57,        58,        59,        60,        61,        62,        63,        64,
+**NSET COUNT = 4
+*NSET, NSET=corner_nodes
+         1,         4,        13,        16,
+*NSET, NSET=ref_node
+	65,
 **Property Definitions
 **
 *SOLID SECTION, ELSET=Body1, MATERIAL=Material1
@@ -178,32 +164,32 @@ Abaqus Job Created By SimLab 2017.2 .
 4.98100e-002
 **
 **
-**Face Constraint Face_Constraint_4
+**Face Constraint Face_Constraint
 **
-*NSET, NSET=Face_Constraint_4
+*NSET, NSET=Face_Constraint
         51,        52,        53,        54,        55,        56,        57,        58,
         59,        60,        61,        62,        63,        64,        49,        50,
 **
-**Force Force_3
-*NSET, NSET=Force_3
+**Force Force
+*NSET, NSET=Force
         65,
 *BOUNDARY
-**Fixed constraints:Face_Constraint_4
-Face_Constraint_4,	1
-Face_Constraint_4,	2
-Face_Constraint_4,	3
+**Fixed constraints:Face_Constraint
+Face_Constraint,	1
+Face_Constraint,	2
+Face_Constraint,	3
 **
 *Step,inc=100
 *Static
-1.0000,1.000000,
+1.0,1.000000,
 *CLOAD
-Force_3,6,500.0e6
+Force,6,-10.0e5
 **
 ** Output Requests
 *output,field,Variable=PRESELECT
-*NODE PRINT, NSET=Coupling_nodes_set
-U,
 *NODE FILE, FREQUENCY=99
 U,V,RF,NT
+*NODE PRINT,NSET=corner_nodes
+U
 *Restart, Write
 *End Step

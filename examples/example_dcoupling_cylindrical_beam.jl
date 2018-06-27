@@ -3,9 +3,8 @@
 
 # # Cylinder in torsion using distributed coupling
 
-# For general information about anything, see
-# [this](https://en.wikipedia.org)
-# wikipedia page.
+# Distributed coupling can be used to distribute point moments as point forces
+# to nodes which dont have rotational degrees of freedom.
 
 # The model is a 3d cylinder, shown in picture.
 
@@ -40,7 +39,6 @@ cylinder_body = create_elements(mesh,"Body1")
 
 update!(cylinder_body, "youngs modulus", 210e3)
 update!(cylinder_body, "poissons ratio", 0.3)
-update!(cylinder_body, "density", 7.80e-9)
 
 # Creating an elasticity problem and adding the elements to it.
 
@@ -95,7 +93,10 @@ add_coupling_nodes!(coupling, coupling_nodes)
 add_reference_node!(coupling, reference_node)
 
 # # Analysis
-# Creating a step and running the analysis
+# Creating a step and running the analysis. The cylinder_problem contains
+# information about the body, its elements and their values. The bc contains
+# information about boundary conditions and coupling contains information
+# about distributed coupling. 
 
 step = Analysis(Nonlinear)
 add_problems!(step, [cylinder_problem, bc, coupling])
@@ -118,7 +119,7 @@ u_mag = norm(u)
 # Making a testset.
 
 using FEMBase.Test
-@testset "displacement magnitude and rotation" begin
+@testset "displacement magnitude" begin
 u_mag_expected=6.306e-4
 @test isapprox(u_mag, u_mag_expected, rtol=1e-3)
 end
