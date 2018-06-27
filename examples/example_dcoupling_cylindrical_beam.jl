@@ -11,8 +11,10 @@
 
 # ![](example_dcoupling_cylindrical_beam/example_dcoupling_cylindrical_beam.png)
 
-# Node sets for fixed end boundary conditions, coupling nodes and reference node
-# were made to the ABAQUS input file.
+# Distributed coupling is used to distribute a torque load to the end of the
+# cylinder. The other end is fixed. Node sets for coupling nodes, reference
+# node and fixed face were made in the ABAQUS input file. Reference node is
+# located in the centrum of the coupling nodes.
 
 using JuliaFEM
 using JuliaFEM: add_elements!, Problem
@@ -23,85 +25,104 @@ using FEMCoupling
 using FEMCoupling: add_reference_node!, add_coupling_nodes!
 
 # reading mesh from ABAQUS input file
+
 datadir = Pkg.dir("FEMCoupling", "examples", "example_dcoupling_cylindrical_beam")
 mesh = abaqus_read_mesh(joinpath(datadir, "example_dcoupling_cylindrical_beam.inp"))
 println("Number of nodes in a model: ", length(mesh.nodes))
 
-################################################################################
-# Creating elements for the whole body. In the ABAQUS input file the cylinder is
-# named "Body1".
+# # Elements
+# Creating elements for the whole body. In the ABAQUS input file the cylinder
+# body is named "Body1".
+
 cylinder_body = create_elements(mesh,"Body1")
-# Updating values for the body elements.
+
+# Updating values for the elements.
+
 update!(cylinder_body, "youngs modulus", 210e3)
 update!(cylinder_body, "poissons ratio", 0.3)
 update!(cylinder_body, "density", 7.80e-9)
 
 # Creating an elasticity problem and adding the elements to it.
-cylinder_problem = Problem(Elasticity,"varsinolla",3)
-add_elements!(cylinder_problem, cylinder_body)
-################################################################################
 
-# Boundary conditions: fixed from the other end
+cylinder_problem = Problem(Elasticity,"cylinder_problem",3)
+add_elements!(cylinder_problem, cylinder_body)
+
+# # Boundary conditions
 # Creating Poi1-type elements as boundary condition elements to nodes of the
 # node set Fixed_face_set.
+
 bc_elements = [Element(Poi1, [j]) for j in mesh.node_sets[:Fixed_face_set]]
-# Updating geometry for the bc_elements
+
+# Updating geometry for the bc elements
+
 update!(bc_elements, "geometry", mesh.nodes)
+
 # Fixing all displacements for the bc elements.
+
 for i=1:3
     update!(bc_elements, "displacement $i", 0.0)
 end
 
 # Creating a bc problem and adding the bc elements to it.
+
 bc = Problem(Dirichlet, "fixed", 3, "displacement")
 add_elements!(bc, bc_elements)
 
-################################################################################
-
-# Coupling
-
+# # Distributed coupling
 # Creating Poi1 elements to nodes in coupling nodes set.
+
 coupling_nodes = [Element(Poi1, [j]) for j in mesh.node_sets[:Coupling_nodes_set]]
+
 # Updating geometry for the coupling nodes.
+
 update!(coupling_nodes, "geometry", mesh.nodes)
 
 # Creating Poi1 element for the reference node.
+
 reference_node_id = collect(mesh.node_sets[:ref_node_set])
 reference_node = Element(Poi1, reference_node_id)
-# Updating geometry for the reference node
+
+# Updating geometry and applying a point moment for the reference node.
+
 update!(reference_node, "geometry", mesh.nodes)
-#  Applying a point moment for the reference node. 
 update!(reference_node, "point moment 3", 1500.0)
+
+# Creating a coupling problem and adding coupling nodes and reference nodes to
+# it.
 
 coupling = Problem(Coupling, "cylind", 3, "displacement")
 add_coupling_nodes!(coupling, coupling_nodes)
 add_reference_node!(coupling, reference_node)
 
-################################################################################
+# # Analysis
+# Creating a step and running the analysis
 
 step = Analysis(Nonlinear)
 add_problems!(step, [cylinder_problem, bc, coupling])
 run!(step)
 
-################################################################################
-# Tests
+# # Results
+
+# Comparing calculated results with ABAQUS results. The node set
+# circlenodes_set contains nodes which are on the outer face radius.
+# These circle nodes should have the maximum displacement magnitude (norm(u)).
+
 node_on_circle = first(mesh.node_sets[:circlenodes_set])
-u = cylinder_problem("displacement", 0.0)[node_on_circle]
+
+# declaring displacements at time 0.0 to variable u
+
+time=0.0
+u = cylinder_problem("displacement", time)[node_on_circle]
 u_mag = norm(u)
+
+# Making a testset.
 
 using FEMBase.Test
 @testset "displacement magnitude and rotation" begin
-
 u_mag_expected=6.306e-4
-
 @test isapprox(u_mag, u_mag_expected, rtol=1e-3)
-
-radius = 16
-a_expected = 6.306e-4/radius # from ABAQUS
-a = u_mag/radius
-
-@test isapprox(a,a_expected,rtol=1e-3)
 end
 
+# Printing node ids
 println("reference node id = $(reference_node_id[1])")
 println("node on circle id = $node_on_circle")
