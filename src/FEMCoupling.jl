@@ -7,7 +7,7 @@ module FEMCoupling
 using Reexport
 @reexport using FEMBase
 
-type KinematicCoupling <: BoundaryProblem
+mutable struct KinematicCoupling <: BoundaryProblem
 end
 
 export KinematicCoupling
