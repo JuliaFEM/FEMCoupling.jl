@@ -9,6 +9,6 @@ using Reexport
 
 include("get_C.jl")
 include("distributed_coupling.jl")
-export Coupling
+export Coupling, add_reference_node!, add_coupling_nodes!
 
 end
