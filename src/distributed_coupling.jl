@@ -128,18 +128,16 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
     for coupling_node in elements
         # couplingelementnumber = first(findin(ns,n))
         cgdofs = get_gdofs(problem, coupling_node)
-        info("cgdofs = $cgdofs")
-
+        n = first(get_connectivity(coupling_node))
+        info("cgdofs = $cgdofs, node id = $n")
         uRn = zeros(6, 3)
-        for n in keys(weights)
-            for j in 1:3
-                uRn[1:3, j] = uRfactor(j, r[n], weights[n])
-                uRn[4:6, j] = wRfactor(j, r[n], weights[n])
-            end
+        for j in 1:3
+            uRn[1:3, j] = uRfactor(j, r[n], weights[n])
+            uRn[4:6, j] = wRfactor(j, r[n], weights[n])
         end
         #C_all_dofs[1:6, couplingelementnumber*3-3)+1:(couplingelementnumber*3-3)+3]= uRn
-        add!(assembly.C2, rgdofs, cgdofs, uRn[1:length(rgdofs),1:length(rgdofs)])
-        # add!(assembly.C1, rgdofs, cgdofs, f)
+        N = length(rgdofs)
+        add!(assembly.C2, rgdofs, cgdofs, uRn[1:N, 1:N])
     end
 
     # add -1 to diagonal of D

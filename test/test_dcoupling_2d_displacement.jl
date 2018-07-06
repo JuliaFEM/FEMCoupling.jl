@@ -59,8 +59,7 @@ add_reference_node!(coupling1, reference_node)
 
 assemble!(coupling1, 0.0)
 assemble!(problem1, 0.0)
-K = full(problem1.assembly.K)[1:6,1:6]
-#K[1:4,1:4] += rand(4, 4)
+K = full(problem1.assembly.K)[1:6, 1:6]
 C1 = full(coupling1.assembly.C1, 6, 6)
 C2 = full(coupling1.assembly.C2, 6, 6)
 D = full(coupling1.assembly.D, 6, 6)
