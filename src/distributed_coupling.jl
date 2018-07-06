@@ -35,32 +35,6 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         return x
     end
 
-    function uRfactor(factor,rn,wn)
-        if factor == 1
-            un = [1,0,0]
-        end
-        if factor == 2
-            un = [0,1,0]
-        end
-        if factor == 3
-            un = [0,0,1]
-        end
-        return wn*un+cross((inv(T)*wn*cross(rn,un)),rR)
-    end
-
-    function wRfactor(factor, rn,wn)
-        if factor == 1
-            un = [1,0,0]
-        end
-        if factor == 2
-            un = [0,1,0]
-        end
-        if factor == 3
-            un = [0,0,1]
-        end
-        return inv(T)*wn*cross(rn,un)
-    end
-
     ref_node = problem.properties.reference_node
     if length(get_connectivity(ref_node)) == 0
         error("Reference node node defined. Define reference node using add_reference_node!")
@@ -101,13 +75,8 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
     end
 
     invT = inv(T)
-    C_all_dofs = zeros(6,3*length(r))
-    ns = []
-    for coupling_node in elements
-        coupling_node_id = first(get_connectivity(coupling_node))
-        push!(ns,coupling_node_id)
-    end
 
+    # handle force boundary conditions / load distribution
 
     for coupling_node in elements
         fill!(fe, 0.0)
@@ -130,32 +99,67 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         Fn = weights[n]*(FR+cross(invT*MRhat,r[n]))
         fe = fe+Fn[1:dimensions]
         add!(assembly.f, gdofs, fe)
-        couplingelementnumber = first(findin(ns,n))
-
-        uRn = zeros(6,3)
-        for j in 1:3
-            uRn[1:3,j] = uRfactor(j,r[n],weights[n])
-            uRn[4:6,j] = wRfactor(j,r[n],weights[n])
-        end
-        # C_all_dofs[1:6, couplingelementnumber*3-3)+1:(couplingelementnumber*3-3)+3]= uRn
-        # add!(assembly.C, gdofs, f)
-
-
     end
 
-    if dimensions == 2
-        rows=[3,4,5]
-        sort!(rows, rev=true)
-        for i in rows
-            C_all_dofs=C_all_dofs[1:end .!=i, 1:end]
-        end
+    # handle displacement boundary conditions / constraint expression
 
-        columns=[3,6]
-        sort!(columns, rev=true)
-        for i in columns
-            C_all_dofs=C_all_dofs[1:end, 1:end .!=i]
-        end
+    function uRfactor(factor, rn, wn)
+        un = zeros(3)
+        un[factor] = 1.0
+        return wn*un + cross(invT * wn*cross(rn, un), rR)
     end
+
+    function wRfactor(factor, rn, wn)
+        un = zeros(3)
+        un[factor] = 1.0
+        return invT*wn*cross(rn, un)
+    end
+
+    # C_all_dofs = zeros(6,3*length(r))
+    # ns = []
+    # for coupling_node in elements
+    #     coupling_node_id = first(get_connectivity(coupling_node))
+    #     push!(ns, coupling_node_id)
+    # end
+
+    rgdofs = get_gdofs(problem, ref_node)
+    info("rgdofs = $rgdofs")
+
+    for coupling_node in elements
+        # couplingelementnumber = first(findin(ns,n))
+        cgdofs = get_gdofs(problem, coupling_node)
+        info("cgdofs = $cgdofs")
+
+        uRn = zeros(6, 3)
+        for n in keys(weights)
+            for j in 1:3
+                uRn[1:3, j] = uRfactor(j, r[n], weights[n])
+                uRn[4:6, j] = wRfactor(j, r[n], weights[n])
+            end
+        end
+        #C_all_dofs[1:6, couplingelementnumber*3-3)+1:(couplingelementnumber*3-3)+3]= uRn
+        add!(assembly.C2, rgdofs, cgdofs, uRn[1:length(rgdofs),1:length(rgdofs)])
+        # add!(assembly.C1, rgdofs, cgdofs, f)
+    end
+
+    # add -1 to diagonal of D
+    for j in rgdofs
+        add!(assembly.D, j, j, -1.0)
+    end
+
+    # if dimensions == 2
+    #     rows=[3,4,5]
+    #     sort!(rows, rev=true)
+    #     for i in rows
+    #         C_all_dofs=C_all_dofs[1:end .!=i, 1:end]
+    #     end
+    #
+    #     columns=[3,6]
+    #     sort!(columns, rev=true)
+    #     for i in columns
+    #         C_all_dofs=C_all_dofs[1:end, 1:end .!=i]
+    #     end
+    # end
 
     return nothing
 
