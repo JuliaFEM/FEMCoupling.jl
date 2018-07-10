@@ -4,9 +4,13 @@
 using Revise
 using JuliaFEM
 using Base.Test
-
+using Logging
+Logging.configure(level=DEBUG)
 revise()
 using FEMCoupling
+
+printa(x) = show(IOContext(STDOUT, limit=true, displaysize=(1000,1000)), "text/plain", x)
+
 
 # Creating 2d geometry for square shaped element and one independent node.
 d = 3.0
@@ -66,7 +70,7 @@ D = full(coupling1.assembly.D, 6, 6)
 A = [K C1; C2 D]
 used_dofs = [1, 2, 3, 4, 11, 12]
 display(A[used_dofs, used_dofs])
-display(C2)
+# display(C1)
 
 # Making step for nonlinear analysis and adding all three problems
 # to the step. Running the analysis.

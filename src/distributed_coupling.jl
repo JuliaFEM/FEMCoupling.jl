@@ -137,7 +137,26 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         end
         #C_all_dofs[1:6, couplingelementnumber*3-3)+1:(couplingelementnumber*3-3)+3]= uRn
         N = length(rgdofs)
+        info("uRn = $(uRn[1:N,1:N])")
         add!(assembly.C2, rgdofs, cgdofs, uRn[1:N, 1:N])
+        # if haskey(ref_node, "fixed displacement 1")
+        #     add!(assembly.C1, cgdofs, rgdofs[1], transpose(uRn[1,1:N]))
+        # end
+        if haskey(ref_node, "fixed displacement 2")
+            add!(assembly.C1, cgdofs, rgdofs[2], transpose(uRn[2,1:N])) # trying to add second row from uRn to C2 as a column to C2[rgdof[2]].
+        end
+        # if haskey(ref_node, "fixed displacement 3")
+        #     add!(assembly.C1, cgdofs, rgdofs[3], transpose(uRn[3,1:N]))
+        # end
+        # if haskey(ref_node, "fixed rotation 1")
+        #     add!(assembly.C1, cgdofs, rgdofs[4], transpose(uRn[4,1:N]))
+        # end
+        # if haskey(ref_node, "fixed rotation 2")
+        #     add!(assembly.C1, cgdofs, rgdofs[4], transpose(uRn[4,1:N]))
+        # end
+        # if haskey(ref_node, "fixed rotation 3")
+        #     add!(assembly.C1, cgdofs, rgdofs[4], transpose(uRn[4,1:N]))
+        # end
     end
 
     # add -1 to diagonal of D
