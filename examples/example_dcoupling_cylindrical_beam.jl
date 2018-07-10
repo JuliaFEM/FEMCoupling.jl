@@ -35,7 +35,7 @@ println("Number of nodes in a model: ", length(mesh.nodes))
 
 cylinder_body = create_elements(mesh,"Body1")
 
-# Updating values for the elements.
+# Updating material properties of steel for elements.
 
 update!(cylinder_body, "youngs modulus", 210e3)
 update!(cylinder_body, "poissons ratio", 0.3)
@@ -47,7 +47,7 @@ add_elements!(cylinder_problem, cylinder_body)
 
 # # Boundary conditions
 # Creating Poi1-type elements as boundary condition elements to nodes of the
-# node set Fixed_face_set.
+# node set Fixed_face_set. Poi1 element is a one node element.
 
 bc_elements = [Element(Poi1, [j]) for j in mesh.node_sets[:Fixed_face_set]]
 
