@@ -143,7 +143,10 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         #     add!(assembly.C1, cgdofs, rgdofs[1], transpose(uRn[1,1:N]))
         # end
         if haskey(ref_node, "fixed displacement 2")
-            add!(assembly.C1, cgdofs, rgdofs[2], transpose(uRn[2,1:N])) # trying to add second row from uRn to C2 as a column to C2[rgdof[2]].
+            info("adding vector $(transpose(uRn[2,1:N]))")
+            info("adding to $(full(assembly.C1))")
+            info("with index $cgdofs, $(rgdofs[2])")
+            add!(assembly.C1, cgdofs, rgdofs[2], transpose(uRn[2,1:N])) # trying to add second row from uRn as a column to C1[cgdofs, rgdof[2] ].
         end
         # if haskey(ref_node, "fixed displacement 3")
         #     add!(assembly.C1, cgdofs, rgdofs[3], transpose(uRn[3,1:N]))
