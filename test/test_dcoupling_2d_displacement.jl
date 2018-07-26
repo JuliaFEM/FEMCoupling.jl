@@ -68,9 +68,15 @@ C1 = full(coupling1.assembly.C1, 6, 6)
 C2 = full(coupling1.assembly.C2, 6, 6)
 D = full(coupling1.assembly.D, 6, 6)
 A = [K C1; C2 D]
-used_dofs = [1, 2, 3, 4, 11, 12]
-display(A[used_dofs, used_dofs])
+used_dofs = [1, 2, 3, 4, 7, 8, 9, 12]
+used_rows = [1, 2, 3, 4, 7, 8, 9]
+used_columns = [1, 2, 3, 4, 7, 8, 12]
+
+display(A[used_rows, used_columns])
+printa(full(coupling1.assembly.g))
 # display(C1)
+
+u = A[used_rows, used_columns]\[full(coupling1.assembly.f) ; full(coupling1.assembly.g)]
 
 # Making step for nonlinear analysis and adding all three problems
 # to the step. Running the analysis.

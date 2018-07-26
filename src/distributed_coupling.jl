@@ -124,6 +124,7 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
 
     rgdofs = get_gdofs(problem, ref_node)
     info("rgdofs = $rgdofs")
+    N = length(rgdofs)
 
     for coupling_node in elements
         # couplingelementnumber = first(findin(ns,n))
@@ -136,37 +137,40 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
             uRn[4:6, j] = wRfactor(j, r[n], weights[n])
         end
         #C_all_dofs[1:6, couplingelementnumber*3-3)+1:(couplingelementnumber*3-3)+3]= uRn
-        N = length(rgdofs)
+
         info("uRn = $(uRn[1:N,1:N])")
-        add!(assembly.C2, rgdofs, cgdofs, uRn[1:N, 1:N])
+        add!(assembly.C2, collect(1:2), cgdofs, uRn[1:N, 1:N])
+
         # if haskey(ref_node, "fixed displacement 1")
-        #     add!(assembly.C1, cgdofs, rgdofs[1], transpose(uRn[1,1:N]))
+        #     info("adding vector $(reshape(uRn[1,1:N],(N,1)))")
+        #     info("adding to $(full(assembly.C1))")
+        #     info("with index $cgdofs, $(rgdofs[1])")
+        #     add!(assembly.C1, cgdofs, [rgdofs[1]], reshape(uRn[1,1:N],(N,1)))
         # end
         if haskey(ref_node, "fixed displacement 2")
-            info("adding vector $(transpose(uRn[2,1:N]))")
+            info("adding vector $(reshape(uRn[2,1:N],(N,1)))")
             info("adding to $(full(assembly.C1))")
             info("with index $cgdofs, $(rgdofs[2])")
-            add!(assembly.C1, cgdofs, rgdofs[2], transpose(uRn[2,1:N])) # trying to add second row from uRn as a column to C1[cgdofs, rgdof[2] ].
+            add!(assembly.C1, cgdofs, [rgdofs[2]], reshape(uRn[2,1:N],(N,1)))
         end
         # if haskey(ref_node, "fixed displacement 3")
-        #     add!(assembly.C1, cgdofs, rgdofs[3], transpose(uRn[3,1:N]))
+        #     info("adding vector $(reshape(uRn[3,1:N],(N,1)))")
+        #     info("adding to $(full(assembly.C1))")
+        #     info("with index $cgdofs, $(rgdofs[3])")
+        #     add!(assembly.C1, cgdofs, [rgdofs[3]], reshape(uRn[3,1:N],(N,1)))
         # end
-        # if haskey(ref_node, "fixed rotation 1")
-        #     add!(assembly.C1, cgdofs, rgdofs[4], transpose(uRn[4,1:N]))
-        # end
-        # if haskey(ref_node, "fixed rotation 2")
-        #     add!(assembly.C1, cgdofs, rgdofs[4], transpose(uRn[4,1:N]))
-        # end
-        # if haskey(ref_node, "fixed rotation 3")
-        #     add!(assembly.C1, cgdofs, rgdofs[4], transpose(uRn[4,1:N]))
-        # end
+
     end
 
     # add -1 to diagonal of D
-    for j in rgdofs
+    for j in 1:N
         add!(assembly.D, j, j, -1.0)
     end
 
+    if haskey(ref_node, "fixed displacement 2")
+        add!(assembly.D, N+1, 2, 1.0)
+        add!(assembly.g, N+1, ref_node("fixed displacement 2",time))
+    end
     # if dimensions == 2
     #     rows=[3,4,5]
     #     sort!(rows, rev=true)
