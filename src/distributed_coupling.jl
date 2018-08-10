@@ -139,37 +139,26 @@ function FEMBase.assemble_elements!(problem::Problem{Coupling},
         #C_all_dofs[1:6, couplingelementnumber*3-3)+1:(couplingelementnumber*3-3)+3]= uRn
 
         info("uRn = $(uRn[1:N,1:N])")
-        add!(assembly.C2, collect(1:2), cgdofs, uRn[1:N, 1:N])
+        add!(assembly.K, rgdofs, cgdofs, uRn[1:N, 1:N])
 
-        # if haskey(ref_node, "fixed displacement 1")
-        #     info("adding vector $(reshape(uRn[1,1:N],(N,1)))")
-        #     info("adding to $(full(assembly.C1))")
-        #     info("with index $cgdofs, $(rgdofs[1])")
-        #     add!(assembly.C1, cgdofs, [rgdofs[1]], reshape(uRn[1,1:N],(N,1)))
-        # end
-        if haskey(ref_node, "fixed displacement 2")
-            info("adding vector $(reshape(uRn[2,1:N],(N,1)))")
-            info("adding to $(full(assembly.C1))")
-            info("with index $cgdofs, $(rgdofs[2])")
-            add!(assembly.C1, cgdofs, [rgdofs[2]], reshape(uRn[2,1:N],(N,1)))
+
+        for i = 1:N
+            if haskey(ref_node, "fixed displacement $i")
+                add!(assembly.C1, cgdofs, [rgdofs[i]], reshape(uRn[i,1:N],(N,1)))
+            end
         end
-        # if haskey(ref_node, "fixed displacement 3")
-        #     info("adding vector $(reshape(uRn[3,1:N],(N,1)))")
-        #     info("adding to $(full(assembly.C1))")
-        #     info("with index $cgdofs, $(rgdofs[3])")
-        #     add!(assembly.C1, cgdofs, [rgdofs[3]], reshape(uRn[3,1:N],(N,1)))
-        # end
 
     end
 
-    # add -1 to diagonal of D
-    for j in 1:N
-        add!(assembly.D, j, j, -1.0)
+    # add -1 to diagonal of K
+    for j in rgdofs
+        add!(assembly.K, j, j, -1.0)
     end
-
-    if haskey(ref_node, "fixed displacement 2")
-        add!(assembly.D, N+1, 2, 1.0)
-        add!(assembly.g, N+1, ref_node("fixed displacement 2",time))
+    for i = 1:N
+        if haskey(ref_node, "fixed displacement $i")
+            add!(assembly.C2, rgdofs[i], rgdofs[i], 1.0)
+            add!(assembly.g, rgdofs[i], ref_node("fixed displacement $i",time))
+        end
     end
     # if dimensions == 2
     #     rows=[3,4,5]

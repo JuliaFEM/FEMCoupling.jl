@@ -54,7 +54,7 @@ update!([coupling_node2, coupling_node3], "geometry", X)
 # applying loads for it.
 reference_node = Element(Poi1, [3])
 update!(reference_node, "geometry", X)
-# update!(reference_node, "fixed displacement 2", 0.032)
+update!(reference_node, "fixed displacement 2", 0.032)
 
 # Pointing out that coupling nodes and reference nodes
 # are for the coupling problem.
@@ -64,19 +64,27 @@ add_reference_node!(coupling1, reference_node)
 assemble!(coupling1, 0.0)
 assemble!(problem1, 0.0)
 K = full(problem1.assembly.K)[1:6, 1:6]
+K += full(coupling1.assembly.K, 6, 6)
 C1 = full(coupling1.assembly.C1, 6, 6)
 C2 = full(coupling1.assembly.C2, 6, 6)
 D = full(coupling1.assembly.D, 6, 6)
 A = [K C1; C2 D]
-used_dofs = [1, 2, 3, 4, 7, 8, 9, 12]
-used_rows = [1, 2, 3, 4, 7, 8, 9]
-used_columns = [1, 2, 3, 4, 7, 8, 12]
+used_rows =    [1, 2, 3, 4, 5, 6, 12]
+used_columns = [1, 2, 3, 4, 5, 6, 12]
+f = full(coupling1.assembly.f,6,1)
+g = full(coupling1.assembly.g,6,1)
+fg = [ f; g]
 
-display(A[used_rows, used_columns])
-printa(full(coupling1.assembly.g))
-# display(C1)
+display([A[used_rows, used_columns] fg[used_rows]] )
+# printa(full(coupling1.assembly.g))
 
-u = A[used_rows, used_columns]\[full(coupling1.assembly.f) ; full(coupling1.assembly.g)]
+printa([A fg])
+
+K = A[used_rows,used_columns]
+f = fg[used_rows]
+u = K\f
+display(u)
+
 
 # Making step for nonlinear analysis and adding all three problems
 # to the step. Running the analysis.
